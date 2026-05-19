@@ -4,7 +4,7 @@ A PromotionsEngine build within an Event Sourcing architecture that calculates c
 
 ## Description
 
-This project is a demonstration of a microservice I built as part of my professional duties. It is intended to be a portfolio piece that highlights my technical aquity building complex microservices. The overall context of this microservices is that it receives domain events from the Purchase Order stream of an E-Commerce ecosystem. There are a few major domain concepts to identify:
+This project is a demonstration of a microservice I built as part of my professional duties. It is intended to be a portfolio piece that highlights my technical acuity building complex microservices. The overall context of this microservices is that it receives domain events from the Purchase Order stream of an E-Commerce ecosystem. There are a few major domain concepts to identify:
 - Merchant
     A retailer or business where e-commerce transactions are occurring
 - Promotion
