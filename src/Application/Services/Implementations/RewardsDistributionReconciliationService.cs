@@ -146,8 +146,10 @@ public class RewardsDistributionReconciliationService : IRewardsDistributionReco
             promotionSummary.NumberOfTimesRedeemed -= 1;
             promotionSummary.TotalNumberOfCustomers -= 1;
 
-            promotion.CustomerIds.Remove(customerId);
-            await _promotionsRepository.UpdatePromotionAsync(promotion, cancellationToken);
+            var livePromotion = await _promotionsRepository.GetPromotionByIdAsync(promotion.Id, cancellationToken)
+                            ?? throw new DomainObjectNullException($"Failed to get promotion: {promotion.Id}");
+            livePromotion.CustomerIds.Remove(customerId);
+            await _promotionsRepository.UpdatePromotionAsync(livePromotion, cancellationToken);
         }
 
         await _promotionSummaryRepository.UpdatePromotionSummaryAsync(promotionSummary, cancellationToken);
