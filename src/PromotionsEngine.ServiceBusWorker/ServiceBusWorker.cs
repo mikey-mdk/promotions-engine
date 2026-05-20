@@ -15,18 +15,18 @@ public class ServiceBusWorker : BackgroundService
 {
     private readonly ILogger<ServiceBusWorker> _logger;
     private readonly ServiceBusOptions _serviceBusOptions;
-    private readonly IPromotionsEngineTransactionMessageHandler _PromotionsEngineTransactionMessageHandler;
+    private readonly IPromotionsEngineTransactionMessageHandler _promotionsEngineTransactionMessageHandler;
 
     private readonly ServiceBusClient _serviceBusClient;
 
     public ServiceBusWorker(
         ILogger<ServiceBusWorker> logger,
         IOptions<ServiceBusOptions> serviceBusOptions,
-        IPromotionsEngineTransactionMessageHandler PromotionsEngineTransactionMessageHandler,
+        IPromotionsEngineTransactionMessageHandler promotionsEngineTransactionMessageHandler,
         IAzureClientFactory<ServiceBusClient> serviceBusClientFactory)
     {
         _logger = logger;
-        _PromotionsEngineTransactionMessageHandler = PromotionsEngineTransactionMessageHandler;
+        _promotionsEngineTransactionMessageHandler = promotionsEngineTransactionMessageHandler;
         _serviceBusOptions = serviceBusOptions.Value;
 
         _serviceBusClient = serviceBusClientFactory.CreateClient(ServiceBusOptions.ServiceBusClientName);
@@ -70,19 +70,19 @@ public class ServiceBusWorker : BackgroundService
         {
             case nameof(PurchaseLedgerOrderCreated):
                 var purchaseLedgerOrderCreated = Deserialize<PurchaseLedgerOrderCreated>(body);
-                await _PromotionsEngineTransactionMessageHandler.Handle(purchaseLedgerOrderCreated);
+                await _promotionsEngineTransactionMessageHandler.Handle(purchaseLedgerOrderCreated);
                 break;
             case nameof(PurchaseLedgerOrderRefunded):
                 var purchaseLedgerOrderRefunded = Deserialize<PurchaseLedgerOrderRefunded>(body);
-                await _PromotionsEngineTransactionMessageHandler.Handle(purchaseLedgerOrderRefunded);
+                await _promotionsEngineTransactionMessageHandler.Handle(purchaseLedgerOrderRefunded);
                 break;
             case nameof(PurchaseLedgerSettled):
                 var purchaseLedgerSettled = Deserialize<PurchaseLedgerSettled>(body);
-                await _PromotionsEngineTransactionMessageHandler.Handle(purchaseLedgerSettled);
+                await _promotionsEngineTransactionMessageHandler.Handle(purchaseLedgerSettled);
                 break;
             default:
                 var transactionMessage = Deserialize<PromotionsEngineTransactionMessage>(body);
-                await _PromotionsEngineTransactionMessageHandler.Handle(transactionMessage);
+                await _promotionsEngineTransactionMessageHandler.Handle(transactionMessage);
                 break;
         }
 
