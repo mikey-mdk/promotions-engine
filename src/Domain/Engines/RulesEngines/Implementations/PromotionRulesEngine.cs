@@ -77,7 +77,6 @@ public class PromotionRulesEngine : IPromotionRulesEngine
         switch (evaluationContext)
         {
             //We want to allow refunds no matter what the state of the promotion summary is.
-            //This may also be true for CheckoutPresentation context. TBD.
             case CPromotionRuleEvaluationContext.OrderRefunded:
                 return true;
             case CPromotionRuleEvaluationContext.OrderCreated:

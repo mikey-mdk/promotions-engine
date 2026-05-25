@@ -50,6 +50,7 @@ public class RewardsDistributionReconciliationService : IRewardsDistributionReco
             CustomerId = request.Command.CustomerId,
             Merchant = request.Merchant,
             Promotion = request.Promotion,
+            RewardBalance = request.RewardAmount,
             RewardTransactions =
             {
                 new RewardTransaction
@@ -159,7 +160,7 @@ public class RewardsDistributionReconciliationService : IRewardsDistributionReco
     /// Update the state of the promotion and promotion-summary when a reward ledger is disqualified.
     /// </summary>
     /// <remarks>
-    /// When a reward is disqualified we should remove the state associated with it so another customer can qualify.
+    /// When a reward is disqualified, we should remove the state associated with it so another customer can qualify.
     /// </remarks>
     private async Task RewardDisqualified(
         CustomerOrderRewardsLedger ledger,

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using PromotionsEngine.Application.Cache.Interfaces;
 using PromotionsEngine.Application.CommandHandlers.Implementations;
 using PromotionsEngine.Application.Commands;
 using PromotionsEngine.Application.Exceptions;
@@ -24,6 +25,7 @@ public class OrderCreatedCommandHandlerTests
     private readonly IRewardsCalculationEngine _fakeRewardsCalculationEngine;
     private readonly IMerchantIdentificationService _fakeMerchantIdentificationService;
     private readonly IRewardsDistributionReconciliationService _fakeRewardsDistributionReconciliationService;
+    private readonly IRedisCacheManager _fakeRedisCacheManager;
 
     private readonly OrderCreatedCommandHandler _orderCreatedCommandHandler;
 
@@ -35,6 +37,10 @@ public class OrderCreatedCommandHandlerTests
         _fakeRewardsCalculationEngine = A.Fake<IRewardsCalculationEngine>();
         _fakeMerchantIdentificationService = A.Fake<IMerchantIdentificationService>();
         _fakeRewardsDistributionReconciliationService = A.Fake<IRewardsDistributionReconciliationService>();
+        _fakeRedisCacheManager = A.Fake<IRedisCacheManager>();
+
+        A.CallTo(() => _fakeRedisCacheManager.GetOrSetAsync(A<string>._, A<Func<Task<List<Promotion>?>>>.Ignored))
+            .ReturnsLazily((string _, Func<Task<List<Promotion>?>> action) => action());
 
         _orderCreatedCommandHandler = new OrderCreatedCommandHandler(
             _fakeCustomerOrderRewardsLedgerRepository,
@@ -42,7 +48,8 @@ public class OrderCreatedCommandHandlerTests
             _fakePromotionRulesEngine,
             _fakeRewardsCalculationEngine,
             _fakeMerchantIdentificationService,
-            _fakeRewardsDistributionReconciliationService);
+            _fakeRewardsDistributionReconciliationService,
+            _fakeRedisCacheManager);
     }
 
     [Fact]

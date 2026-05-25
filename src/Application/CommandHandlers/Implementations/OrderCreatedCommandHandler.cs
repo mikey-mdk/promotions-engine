@@ -1,4 +1,5 @@
-﻿using PromotionsEngine.Application.CommandHandlers.Interfaces;
+﻿using PromotionsEngine.Application.Cache.Interfaces;
+using PromotionsEngine.Application.CommandHandlers.Interfaces;
 using PromotionsEngine.Application.Commands;
 using PromotionsEngine.Application.Exceptions;
 using PromotionsEngine.Application.Requests.Reconciliation;
@@ -20,6 +21,7 @@ public class OrderCreatedCommandHandler : IOrderCreatedCommandHandler
     private readonly IRewardsCalculationEngine _rewardsCalculationEngine;
     private readonly IMerchantIdentificationService _merchantIdentificationService;
     private readonly IRewardsDistributionReconciliationService _rewardsDistributionReconciliationService;
+    private readonly IRedisCacheManager _redisCacheManager;
 
     public OrderCreatedCommandHandler(
         ICustomerOrderRewardsLedgerRepository customerOrderRewardsLedgerRepository,
@@ -27,7 +29,8 @@ public class OrderCreatedCommandHandler : IOrderCreatedCommandHandler
         IPromotionRulesEngine promotionRulesEngineEvaluator,
         IRewardsCalculationEngine rewardsCalculationEngine,
         IMerchantIdentificationService merchantIdentificationService,
-        IRewardsDistributionReconciliationService rewardsDistributionReconciliationService)
+        IRewardsDistributionReconciliationService rewardsDistributionReconciliationService,
+        IRedisCacheManager redisCacheManager)
     {
         _customerOrderRewardsLedgerRepository = customerOrderRewardsLedgerRepository;
         _promotionsRepository = promotionsRepository;
@@ -35,6 +38,7 @@ public class OrderCreatedCommandHandler : IOrderCreatedCommandHandler
         _rewardsCalculationEngine = rewardsCalculationEngine;
         _merchantIdentificationService = merchantIdentificationService;
         _rewardsDistributionReconciliationService = rewardsDistributionReconciliationService;
+        _redisCacheManager = redisCacheManager;
     }
 
     public async Task HandleOrderCreatedCommand(OrderCreatedCommand command, CancellationToken cancellationToken)
@@ -54,7 +58,8 @@ public class OrderCreatedCommandHandler : IOrderCreatedCommandHandler
         var merchant = await _merchantIdentificationService.IdentifyMerchantByRegexAsync(command.MerchantName, cancellationToken)
                        ?? throw new DomainObjectNullException("Unable to find merchant for order.");
 
-        var promotions = await _promotionsRepository.GetPromotionsByMerchantIdAsync(merchant.MerchantId, cancellationToken);
+        var promotions = await _redisCacheManager.GetOrSetAsync(merchant.MerchantId,
+            () => _promotionsRepository.GetPromotionsByMerchantIdAsync(merchant.MerchantId, cancellationToken));
 
         var validPromotionsByPromotionsSummaryList = await _promotionRulesEngineEvaluator.FindValidPromotions(new FindValidPromotionsRequest
         {

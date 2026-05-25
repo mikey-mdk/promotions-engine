@@ -1,4 +1,5 @@
 ﻿using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -32,17 +33,22 @@ public class CustomerOrderRewardsLedgerRepository : ICustomerOrderRewardsLedgerR
     {
         try
         {
-            var customerOrderRewardsLedgerEntity =
-                await _customerOrderRewardsLedgerContainer.ReadItemAsync<CustomerOrderRewardsLedgerEntity>(id: orderId,
-                    partitionKey: new PartitionKey(orderId), cancellationToken: cancellationToken);
+            var queryable = _customerOrderRewardsLedgerContainer
+                .GetItemLinqQueryable<CustomerOrderRewardsLedgerEntity>(allowSynchronousQueryExecution: true)
+                .Where(x => x.OrderId == orderId);
 
-            return customerOrderRewardsLedgerEntity == null
-                ? new CustomerOrderRewardsLedger()
-                : CustomerOrderRewardsLedgerMapper.MapToDomain(customerOrderRewardsLedgerEntity);
-        }
-        catch (CosmosException ce) when (ce.StatusCode == HttpStatusCode.NotFound)
-        {
-            //Cosmos throws an exception for every not found request and we don't want to write logs for each of these
+            using var feed = queryable.ToFeedIterator();
+
+            while (feed.HasMoreResults)
+            {
+                var response = await feed.ReadNextAsync(cancellationToken);
+                var entity = response.FirstOrDefault();
+                if (entity != null)
+                {
+                    return entity.MapToDomain();
+                }
+            }
+
             return new CustomerOrderRewardsLedger();
         }
         catch (Exception e)
@@ -54,9 +60,32 @@ public class CustomerOrderRewardsLedgerRepository : ICustomerOrderRewardsLedgerR
         }
     }
 
-    public Task<List<CustomerOrderRewardsLedger>> GetLedgersForCustomer(string customerId, CancellationToken cancellationToken)
+    public async Task<List<CustomerOrderRewardsLedger>> GetLedgersForCustomer(string customerId, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var queryable = _customerOrderRewardsLedgerContainer
+                .GetItemLinqQueryable<CustomerOrderRewardsLedgerEntity>(allowSynchronousQueryExecution: true)
+                .Where(x => x.CustomerId == customerId);
+
+            using var feed = queryable.ToFeedIterator();
+
+            var ledgers = new List<CustomerOrderRewardsLedger>();
+            while (feed.HasMoreResults)
+            {
+                var response = await feed.ReadNextAsync(cancellationToken);
+                ledgers.AddRange(response.Select(e => e.MapToDomain()));
+            }
+
+            return ledgers;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e,
+                "Exception encountered attempting to get ledgers for customerId: {customerId}",
+                customerId);
+            return new List<CustomerOrderRewardsLedger>();
+        }
     }
 
     public async Task<CustomerOrderRewardsLedger?> CreateCustomerOrderRewardsLedger(CustomerOrderRewardsLedger ledger, CancellationToken cancellationToken)
@@ -78,8 +107,21 @@ public class CustomerOrderRewardsLedgerRepository : ICustomerOrderRewardsLedgerR
         }
     }
 
-    public Task<CustomerOrderRewardsLedger> UpdateCustomerOrderRewardsLedger(CustomerOrderRewardsLedger ledger, CancellationToken cancellationToken)
+    public async Task<CustomerOrderRewardsLedger> UpdateCustomerOrderRewardsLedger(CustomerOrderRewardsLedger ledger, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var entity = ledger.MapToEntity();
+
+            var updated = await _customerOrderRewardsLedgerContainer.UpsertItemAsync(entity,
+                new PartitionKey(entity.CustomerId), cancellationToken: cancellationToken);
+
+            return updated.Resource.MapToDomain();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Exception encountered attempting to update ledger for orderId: {orderId}", ledger.OrderId);
+            return ledger;
+        }
     }
 }

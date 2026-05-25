@@ -108,6 +108,7 @@ public class OrderRefundedCommandHandler : IOrderRefundedCommandHandler
                     PromotionSummary = promotionSummary,
                     Command = command,
                     CustomerOrderRewardsLedger = customerOrderRewardsLedger,
+                    CustomerId = customerOrderRewardsLedger.CustomerId,
                     NewRewardBalance = newRewardBalance,
                     RewardDifference = rewardDifference,
                 }, cancellationToken);
@@ -139,6 +140,7 @@ public class OrderRefundedCommandHandler : IOrderRefundedCommandHandler
                         PromotionSummary = promotionSummary,
                         Command = command,
                         CustomerOrderRewardsLedger = customerOrderRewardsLedger,
+                        CustomerId = customerOrderRewardsLedger.CustomerId,
                         NewRewardBalance = newRewardBalance,
                         RewardDifference = rewardDifference,
                     }, cancellationToken);

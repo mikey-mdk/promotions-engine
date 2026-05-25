@@ -23,9 +23,10 @@ public class PromotionRulesEngineHelper : IPromotionRulesEngineHelper
         }
 
         //Not every promotion will define a max transaction amount.
-        if (promotion.PromotionRules.MaximumTransactionAmount.HasValue)
+        if (promotion.PromotionRules.MaximumTransactionAmount.HasValue
+            && promotion.PromotionRules.MaximumTransactionAmount < orderAmount)
         {
-            return promotion.PromotionRules.MaximumTransactionAmount >= orderAmount;
+            return false;
         }
 
         //Not every workflow will have a customer id.

@@ -112,6 +112,7 @@ public class CosmosChangeFeedProcessor : ICosmosChangeFeedProcessor
                     item.CreatedDateTime);
 
                 await _redisCacheManager.InvalidateCache(item.Id);
+                await _redisCacheManager.InvalidateCache(item.MerchantId);
             }
         }
         catch (Exception e)

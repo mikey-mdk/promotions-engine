@@ -22,6 +22,7 @@ public static class CustomerOrderRewardsLedgerMapper
     {
         return new CustomerOrderRewardsLedgerEntity
         {
+            Id = customerOrderRewardsLedger.OrderId,
             OrderId = customerOrderRewardsLedger.OrderId,
             CustomerId = customerOrderRewardsLedger.CustomerId,
             Merchant = customerOrderRewardsLedger.Merchant.MapToEntity(),
